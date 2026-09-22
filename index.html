@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Board</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f4f7fb;
+      --surface: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #635bff;
+      --primary-dark: #5048d8;
+      --border: #e4e7ec;
+      --danger: #d92d20;
+      --shadow: 0 18px 50px rgba(31, 41, 55, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #eef2ff, var(--background) 45%, #ecfeff);
+    }
+
+    .shell {
+      width: min(760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 64px 0;
+    }
+
+    .hero { margin-bottom: 24px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.05; }
+    .subtitle { margin: 12px 0 0; color: var(--muted); font-size: 1.05rem; }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+    }
+
+    .form { display: flex; gap: 10px; }
+    input, select, button { font: inherit; }
+    input, select {
+      min-height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0 14px;
+      color: var(--text);
+      background: var(--surface);
+    }
+    input { flex: 1; min-width: 0; }
+    input:focus, select:focus, button:focus-visible { outline: 3px solid rgba(99, 91, 255, 0.25); outline-offset: 2px; }
+
+    button {
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 17px;
+      color: #fff;
+      background: var(--primary);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button:hover { background: var(--primary-dark); }
+    button.secondary { color: var(--text); background: #eef0f5; }
+    button.secondary:hover { background: #e1e5ed; }
+    button.delete { min-height: 34px; padding: 0 10px; color: var(--danger); background: transparent; }
+    button.delete:hover { background: #fff1f0; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 22px 0 14px;
+    }
+    .count { color: var(--muted); font-size: 0.92rem; }
+    .filters { display: flex; gap: 8px; }
+
+    .tasks { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: var(--surface);
+    }
+    .task label { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+    .task input[type="checkbox"] { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--primary); }
+    .task-title { overflow-wrap: anywhere; }
+    .task.done .task-title { color: var(--muted); text-decoration: line-through; }
+    .empty { margin: 28px 0 8px; color: var(--muted); text-align: center; }
+
+    .table-wrapper { overflow-x: auto; }
+    .messy-report table { width: 100%; min-width: 640px; border-collapse: collapse; }
+    .messy-report caption { margin-bottom: 12px; color: var(--muted); text-align: left; }
+    .messy-report th, .messy-report td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    .messy-report th { font-size: 0.9rem; }
+    .messy-report input { width: 7rem; min-height: 38px; }
+
+    @media (max-width: 560px) {
+      .shell { padding: 36px 0; }
+      .card { padding: 16px; border-radius: 18px; }
+      .form, .toolbar { align-items: stretch; flex-direction: column; }
+      .filters { display: grid; grid-template-columns: 1fr 1fr; }
+      .filters select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Simple productivity</p>
+      <h1>Task Board</h1>
+      <p class="subtitle">Catat pekerjaan kecil, selesaikan satu per satu.</p>
+    </header>
+
+    <section class="card" aria-labelledby="task-heading">
+      <h2 id="task-heading" hidden>Daftar tugas</h2>
+      <form class="form" id="task-form">
+        <label for="task-input" hidden>Tugas baru</label>
+        <input id="task-input" name="task" type="text" maxlength="120" placeholder="Apa yang ingin dikerjakan?" autocomplete="off" required>
+        <button type="submit">Tambah tugas</button>
+      </form>
+
+      <div class="toolbar">
+        <span class="count" id="task-count" aria-live="polite">0 tugas</span>
+        <div class="filters">
+          <label for="filter" hidden>Tampilkan tugas</label>
+          <select id="filter">
+            <option value="all">Semua</option>
+            <option value="active">Belum selesai</option>
+            <option value="completed">Selesai</option>
+          </select>
+          <button class="secondary" id="clear-completed" type="button">Hapus selesai</button>
+        </div>
+      </div>
+
+      <ul class="tasks" id="task-list"></ul>
+      <p class="empty" id="empty-state">Belum ada tugas. Tambahkan tugas pertama kamu.</p>
+    </section>
+
+    <section class="card messy-report" aria-labelledby="report-heading">
+      <h2 id="report-heading">Laporan anggota tim</h2>
+      <div class="table-wrapper" tabindex="0" aria-label="Geser untuk melihat seluruh tabel laporan anggota tim">
+        <table>
+          <caption>Ringkasan status dan kemajuan pekerjaan anggota tim.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nama</th>
+              <th scope="col">Status</th>
+              <th scope="col">Progress</th>
+              <th scope="col">Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Rina</th>
+              <td>Aktif</td>
+              <td>90%</td>
+              <td>Hampir selesai, tinggal merapikan dokumentasi.</td>
+            </tr>
+            <tr>
+              <th scope="row">Bagus</th>
+              <td>Tertunda</td>
+              <td><input type="text" value="40%" aria-label="Progress Bagus"></td>
+              <td>Menunggu data dari tim lain.</td>
+            </tr>
+            <tr>
+              <th scope="row">Sari</th>
+              <td>Aktif</td>
+              <td><strong>100%</strong></td>
+              <td>Sudah beres</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "task-board-items";
+      const form = document.querySelector("#task-form");
+      const input = document.querySelector("#task-input");
+      const list = document.querySelector("#task-list");
+      const filter = document.querySelector("#filter");
+      const count = document.querySelector("#task-count");
+      const emptyState = document.querySelector("#empty-state");
+      const clearCompleted = document.querySelector("#clear-completed");
+
+      let tasks = loadTasks();
+
+      function loadTasks() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+          return Array.isArray(stored)
+            ? stored.filter((task) => task && typeof task.id === "string" && typeof task.title === "string" && typeof task.completed === "boolean")
+            : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveTasks() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        } catch {
+          // Storage may be unavailable or full; the in-memory board remains usable.
+        }
+      }
+
+      function visibleTasks() {
+        if (filter.value === "active") return tasks.filter((task) => !task.completed);
+        if (filter.value === "completed") return tasks.filter((task) => task.completed);
+        return tasks;
+      }
+
+      function render() {
+        const visible = visibleTasks();
+        list.replaceChildren();
+        count.textContent = `${tasks.filter((task) => !task.completed).length} tugas tersisa`;
+        emptyState.hidden = visible.length > 0;
+
+        visible.forEach((task) => {
+          const item = document.createElement("li");
+          item.className = `task${task.completed ? " done" : ""}`;
+
+          const label = document.createElement("label");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = task.completed;
+          checkbox.setAttribute("aria-label", `Tandai ${task.title} sebagai selesai`);
+          checkbox.addEventListener("change", () => toggleTask(task.id));
+
+          const title = document.createElement("span");
+          title.className = "task-title";
+          title.textContent = task.title;
+          label.append(checkbox, title);
+
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "delete";
+          deleteButton.type = "button";
+          deleteButton.textContent = "Hapus";
+          deleteButton.addEventListener("click", () => deleteTask(task.id));
+
+          item.append(label, deleteButton);
+          list.append(item);
+        });
+      }
+
+      function addTask(title) {
+        tasks.unshift({ id: crypto.randomUUID(), title, completed: false });
+        saveTasks();
+        render();
+      }
+
+      function toggleTask(id) {
+        tasks = tasks.map((task) => task.id === id ? { ...task, completed: !task.completed } : task);
+        saveTasks();
+        render();
+      }
+
+      function deleteTask(id) {
+        tasks = tasks.filter((task) => task.id !== id);
+        saveTasks();
+        render();
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = input.value.trim();
+        if (!title) return;
+        addTask(title);
+        form.reset();
+        input.focus();
+      });
+
+      filter.addEventListener("change", render);
+      clearCompleted.addEventListener("click", () => {
+        tasks = tasks.filter((task) => !task.completed);
+        saveTasks();
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
