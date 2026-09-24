@@ -20,6 +20,15 @@ Before reviewing anything:
 5. Inspect the latest Git diff.
 6. Inspect the existing source code and tests.
 
+## Handoff workflow
+
+This repository uses a two-part AI workflow:
+
+- the Ubuntu/WSL side acts as an orchestrator and prepares the task handoff
+- the VS Code Copilot side reads those generated files and performs Hermes review
+
+Do not treat every small code edit as a fresh review. When `.ai/TASK.md` contains `READY_FOR_HERMES_REVIEW`, act in Hermes mode and review the current state from the handoff files instead of switching back to generic coding.
+
 ## Review responsibilities
 
 Check:

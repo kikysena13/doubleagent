@@ -36,6 +36,15 @@ echo "AI workspace OK."
 
 echo "Hermes custom agent configured."
 
+echo "WSL orchestrator is ready to hand off review state to VS Code Copilot."
+
+echo
+
+if grep -q "READY_FOR_HERMES_REVIEW" .ai/TASK.md 2>/dev/null; then
+    echo "Review handoff detected: .ai/TASK.md is set to READY_FOR_HERMES_REVIEW"
+    echo "Next step: VS Code Copilot should read .ai/HANDOFF.md and .ai/REVIEW.md workflow files without manual agent switching."
+fi
+
 echo
 echo "[3/6] Current branch:"
 git branch --show-current

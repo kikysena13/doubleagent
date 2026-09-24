@@ -5,6 +5,7 @@
 ### Copilot
 
 - Added a self-contained `index.html` Task Board with inline HTML, CSS, and JavaScript.
+- Added a responsive navbar linking to the task and team-report sections.
 - Added task workflow documentation for Hermes review.
 - Added an intentionally messy team-report table for the Hermes test.
 
